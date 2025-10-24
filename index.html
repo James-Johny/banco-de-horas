@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busca por Matrícula em PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    /* Reset e configurações básicas */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Cabeçalho */
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px 0;
+      border-bottom: 1px solid #e1e5e9;
+    }
+    
+    h1 {
+      color: #4F1C86;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    /* Seção de busca */
+    .busca-container {
+      background-color: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    input[type="text"]:focus {
+      border-color: #4F1C86;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(79, 28, 134, 0.2);
+    }
+    
+    button {
+      background-color: #4F1C86;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 100%;
+    }
+    
+    button:hover {
+      background-color: #3a1463;
+    }
+    
+    /* Seção de resultado */
+    #resultado {
+      margin-top: 20px;
+      padding: 20px;
+      border-left: 5px solid #4F1C86;
+      background-color: #e2d3f1;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    #resultado h2 {
+      margin-bottom: 15px;
+      color: #4F1C86;
+    }
+    
+    #resultado ul {
+      list-style-type: none;
+    }
+    
+    #resultado li {
+      margin-bottom: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(79, 28, 134, 0.2);
+    }
+    
+    #resultado li:last-child {
+      border-bottom: none;
+    }
+    
+    .positivo { color: rgb(51, 106, 255); }
+    .negativo { color: rgb(253, 67, 67); }
+    .neutro { color: #666; }
+    
+    /* Estados de carregamento */
+    .loading {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .loading:after {
+      content: "...";
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+      40% { color: #4F1C86; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+      60% { text-shadow: .25em 0 0 #4F1C86, .5em 0 0 rgba(0,0,0,0); }
+      80%, 100% { text-shadow: .25em 0 0 #4F1C86, .5em 0 0 #4F1C86; }
+    }
+    
+    /* Media Queries para responsividade */
+    @media (min-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      .busca-container {
+        padding: 30px;
+      }
+      
+      .form-row {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+      }
+      
+      .form-group {
+        flex: 1;
+        margin-bottom: 0;
+      }
+      
+      button {
+        width: auto;
+        min-width: 150px;
+      }
+    }
+    
+    @media (min-width: 992px) {
+      body {
+        padding: 40px 20px;
+      }
+      
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        align-items: start;
+      }
+      
+      .busca-container {
+        margin-bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Busca por Matrícula</h1>
+    <p>Digite o número da matrícula</p>
+  </header>
+  
+  <div class="container">
+    <section class="busca-container">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="matricula">Matrícula:</label>
+          <input type="text" id="matricula" placeholder="Ex: 12345678">
+        </div>
+        <button onclick="buscarPorMatricula()">Buscar</button>
+      </div>
+    </section>
+    
+    <section id="resultado">
+      <!-- Resultado será exibido aqui -->
+    </section>
+  </div>
+
+  <script>
+    let textoPDF = "";
+
+    // Carrega e extrai texto do PDF
+    fetch("bancodehoras.pdf")
+      .then(res => res.arrayBuffer())
+      .then(data => pdfjsLib.getDocument({ data }).promise)
+      .then(pdf => {
+        const total = pdf.numPages;
+        const promises = [];
+
+        for (let i = 1; i <= total; i++) {
+          promises.push(
+            pdf.getPage(i).then(page =>
+              page.getTextContent().then(content =>
+                content.items.map(item => item.str).join(" ")
+              )
+            )
+          );
+        }
+
+        return Promise.all(promises);
+      })
+      .then(paginas => {
+        textoPDF = paginas.join("\n");
+        document.getElementById("resultado").innerHTML = "<p>PDF carregado com sucesso. Digite uma matrícula para buscar.</p>";
+      })
+      .catch(err => {
+        document.getElementById("resultado").innerHTML = `<p class="negativo">Erro ao carregar o PDF.</p>`;
+        console.error(err);
+      });
+
+    function buscarPorMatricula() {
+      const termo = document.getElementById("matricula").value.trim();
+      const resultadoDiv = document.getElementById("resultado");
+      
+      if (!termo) {
+        resultadoDiv.innerHTML = "<p class='negativo'>Por favor, digite uma matrícula para buscar.</p>";
+        return;
+      }
+      
+      resultadoDiv.innerHTML = "<p class='loading'>Buscando</p>";
+
+      if (!textoPDF) {
+        resultadoDiv.innerHTML = "<p class='negativo'>PDF ainda não carregado. Aguarde um momento e tente novamente.</p>";
+        return;
+      }
+
+      // Divide o texto por possíveis inícios de matrícula
+      const blocos = textoPDF.split(/(?=\d{8,}\s-\s)/g);
+      let encontrado = null;
+
+      for (const bloco of blocos) {
+        if (bloco.includes(termo)) {
+          const partes = bloco.trim().split(/\s-\s|\s+/);
+          const matricula = partes[0];
+          const nome = partes.slice(1, partes.length - 4).join(" ");
+          const saldoAtual = partes[partes.length - 4];
+          const saldoAnterior = partes[partes.length - 3];
+          const horasCredito = partes[partes.length - 2];
+          const horasDebito = partes[partes.length - 1];
+
+          encontrado = { matricula, nome, saldoAtual, saldoAnterior, horasCredito, horasDebito };
+          break;
+        }
+      }
+
+      function corHora(valor) {
+        if (!valor || valor === "00:00") return "neutro";
+        if (valor.startsWith("-")) return "negativo";
+        return "positivo";
+      }
+
+      if (encontrado) {
+        resultadoDiv.innerHTML = `
+          <h2>Resultado:</h2>
+          <ul>
+            <li><strong>Colaborador:</strong> ${encontrado.nome}</li>
+            <li><strong>Matrícula:</strong> ${encontrado.matricula}</li>
+            <li><strong>Saldo Anterior:</strong> <span class="${corHora(encontrado.saldoAtual)}">${encontrado.saldoAtual}</span></li>
+            <li><strong>Horas Crédito:</strong> <span class="${corHora(encontrado.saldoAnterior)}">${encontrado.saldoAnterior}</span></li>
+            <li><strong>Horas Débito:</strong> <span class="${corHora(encontrado.horasCredito)}">${encontrado.horasCredito}</span></li>
+            <li><strong>Saldo Atual:</strong> <span class="${corHora(encontrado.horasDebito)}">${encontrado.horasDebito}</span></li>
+          </ul>
+        `;
+      } else {
+        resultadoDiv.innerHTML = `<p class="negativo">Matrícula não encontrada.</p>`;
+      }
+    }
+    
+    // Permitir busca ao pressionar Enter
+    document.getElementById("matricula").addEventListener("keyup", function(event) {
+      if (event.key === "Enter") {
+        buscarPorMatricula();
+      }
+    });
+  </script>
+</body>
+</html>
